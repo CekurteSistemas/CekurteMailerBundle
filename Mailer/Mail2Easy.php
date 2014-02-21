@@ -640,17 +640,17 @@ class Mail2Easy extends ContainerAware
                 ))
             ));
 
-            if ($contact === false) {
+            $userGroupIds = array();
 
-                $userGroupIds = array();
-
-                if (is_string($contato['grupo'])) {
-                    $userGroupIds[] = $this->getGrupoId($contato['grupo']);
-                } else {
-                    foreach ($contato['grupo'] as $grupo) {
-                        $userGroupIds[] = $this->getGrupoId($grupo);
-                    }
+            if (is_string($contato['grupo'])) {
+                $userGroupIds[] = $this->getGrupoId($contato['grupo']);
+            } else {
+                foreach ($contato['grupo'] as $grupo) {
+                    $userGroupIds[] = $this->getGrupoId($grupo);
                 }
+            }
+
+            if ($contact === false) {
 
                 // Configura os grupos que serão adicionados ao agendamento
                 $data = array(
@@ -664,10 +664,19 @@ class Mail2Easy extends ContainerAware
 
                 // Executa a chamada de adição de contato
                 $contact = $this->runCommand('contact/create', $data, 'POST');
-            }
 
-            if (!isset($contact->id)) {
-                throw new \Exception($contact->message);
+                if (!isset($contact->id)) {
+                    throw new \Exception($contact->message);
+                }
+
+            } else {
+
+                // Associa o usuário aos grupos
+                $data = array(
+                    'list' => json_encode($userGroupIds),
+                );
+
+                $contact = $this->runCommand(sprintf('contact/%s/associate/', $contact->id), $data, 'POST');
             }
         }
 
