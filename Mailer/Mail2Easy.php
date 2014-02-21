@@ -2,6 +2,9 @@
 
 namespace Cekurte\MailerBundle\Mailer;
 
+use Cekurte\ComponentBundle\Util\ContainerAware;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+
 /**
  * Classe responsável por permitir que o Symfony2
  * trabalhe com a API da Dinamize realizando a integração
@@ -10,7 +13,7 @@ namespace Cekurte\MailerBundle\Mailer;
  * @author João Paulo Cercal <sistemas@cekurte.com>
  * @version 1.0
  */
-class Mail2Easy
+class Mail2Easy extends ContainerAware
 {
     /**
      * URL utilizada no processo de autenticação da API do Mail2Easy
@@ -60,11 +63,12 @@ class Mail2Easy
     /**
      * Inicialização
      *
-     * @param string $username
-     * @param string $password
+     * @param ContainerInterface $container
      */
-    public function __construct($username, $password)
+    public function __construct(ContainerInterface $container)
     {
+        $this->setContainer($container);
+
         $serviceHandler = curl_init();
 
         // Prepara as opções para o processo de autenticação
@@ -73,8 +77,13 @@ class Mail2Easy
         curl_setopt($serviceHandler, CURLOPT_RETURNTRANSFER, TRUE);
         curl_setopt($serviceHandler, CURLOPT_POST, TRUE);
 
+        $parameter = $this->getContainer()->getParameter('cekurte_mailer');
+
         // Dados de autenticação. Senhas devem ser passadas sempre como um hash MD5
-        $data = array('username' => $username, 'password' => md5($password));
+        $data = array(
+            'username' => $parameter['mail2easy']['username'],
+            'password' => md5($parameter['mail2easy']['password'])
+        );
 
         curl_setopt($serviceHandler, CURLOPT_POSTFIELDS, http_build_query($data));
 
@@ -371,18 +380,15 @@ class Mail2Easy
         return $this;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
+    /**
+     * Este método é fornecido na API do Mail2Easy
+     *
+     * @param  string $command  o recurso que será solicitado
+     * @param  array|null $data os dados enviados via requisição POST e PUT ou nulo para GET
+     * @param  string $method   o método de envio
+     *
+     * @return array
+     */
     protected function runCommand($command, $data = null, $method = 'GET')
     {
         $method = strtoupper($method);
@@ -422,6 +428,13 @@ class Mail2Easy
         return json_decode(curl_exec($serviceHandler));
     }
 
+    /**
+     * Realiza uma busca na api por um recurso
+     *
+     * @param  string $resource
+     * @param  array  $data
+     * @return boolean true se encontrar o recurso, false do contrário
+     */
     protected function hasResourceByFilterList($resource, $data)
     {
         $response = $this->runCommand($resource . '/search', $data, 'POST');
@@ -439,6 +452,15 @@ class Mail2Easy
         throw new \Exception(sprintf('A busca pelo recurso "%s" retornou mais de um registro. Refine a sua busca!', $resource));
     }
 
+    /**
+     * Realiza uma busca na api por um recurso através de um único campo de busca
+     *
+     * @param  string $resource
+     * @param  string $value
+     * @param  string $name
+     * @param  string $operator
+     * @return boolean true se encontrar o recurso, false do contrário
+     */
     protected function hasResourceByName($resource, $value, $name = 'query', $operator = '=')
     {
         $data = array(
@@ -452,6 +474,11 @@ class Mail2Easy
         return $this->hasResourceByFilterList($resource, $data);
     }
 
+    /**
+     * Faz a busca na API pelo template, caso ele não exista realiza a criação
+     *
+     * @return int o ID do template na API
+     */
     protected function getTemplateId()
     {
         $template = $this->getTemplate();
@@ -469,6 +496,11 @@ class Mail2Easy
         return $resource->id;
     }
 
+    /**
+     * Faz a busca na API pelo campanha, caso ela não exista realiza a criação
+     *
+     * @return int o ID da campanha na API
+     */
     protected function getCampanhaId()
     {
         $campanha = $this->getCampanha();
@@ -486,6 +518,11 @@ class Mail2Easy
         return $resource->id;
     }
 
+    /**
+     * Faz a busca na API pelo remetente, caso ela não exista realiza a criação
+     *
+     * @return int o ID do remetente na API
+     */
     protected function getRemetenteId()
     {
         $remetente = $this->getRemetente();
@@ -508,6 +545,11 @@ class Mail2Easy
         return $resource->id;
     }
 
+    /**
+     * Faz a busca na API pelo grupo, caso ela não exista realiza a criação
+     *
+     * @return int o ID do grupo na API
+     */
     protected function getGrupoId($grupo)
     {
         $resource = $this->hasResourceByName('group', $grupo);
@@ -523,6 +565,11 @@ class Mail2Easy
         return $resource->id;
     }
 
+    /**
+     * Realiza o envio da mensagem
+     *
+     * @return boolean
+     */
     public function sendEmailMessage()
     {
         $templateId     = $this->getTemplateId();
