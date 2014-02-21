@@ -483,11 +483,7 @@ class Mail2Easy extends ContainerAware
     {
         $template = $this->getTemplate();
 
-        $resource = $this->hasResourceByName('template', $template['name']);
-
-        if ($resource === false) {
-            $resource = $this->runCommand('template/create', $template, 'POST');
-        }
+        $resource = $this->runCommand('template/create', $template, 'POST');
 
         if (!isset($resource->id)) {
             throw new \Exception($resource->message);
