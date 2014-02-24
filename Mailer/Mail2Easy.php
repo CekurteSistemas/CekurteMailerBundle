@@ -439,6 +439,10 @@ class Mail2Easy extends ContainerAware
     {
         $response = $this->runCommand($resource . '/search', $data, 'POST');
 
+        if (!isset($response->total)) {
+            throw new \Exception(sprintf('O parametro "%s" não foi encontrado para o recurso "%s"!', 'total', $resource));
+        }
+
         if ($response->total === 0) {
 
            return false;
