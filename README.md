@@ -1,7 +1,7 @@
 CekurteMailerBundle
 =============
 
-
+O Mail2Easy é a plataforma de envio e gerenciamento de e-mail marketing da Dinamize. A ferramenta foi planejada para ser extremamente robusta, modular e, ao mesmo tempo muito simples de usar.
 
 Sendo assim, foi realizada a integração do serviço com o Symfony2.
 
