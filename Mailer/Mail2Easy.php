@@ -31,9 +31,10 @@ class Mail2Easy extends ContainerAware
     protected $authToken;
 
     /**
-     * Inicialização
+     * Initialize Mail2Easy
      *
      * @param ContainerInterface $container
+     * @throws \Exception
      */
     public function __construct(ContainerInterface $container)
     {
